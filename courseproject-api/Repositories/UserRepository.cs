@@ -19,7 +19,7 @@ namespace courseproject_api.Repositories
         }
         public ICollection<User> GetUsers()
         {
-            throw new NotImplementedException();
+            return Users;
         }
 
         public User GetUser(int id)
@@ -42,7 +42,7 @@ namespace courseproject_api.Repositories
 
             Users.Add(newUser);
 
-            return newUser;
+            return GetUser(newUser.Email);
         }
     }
 }
