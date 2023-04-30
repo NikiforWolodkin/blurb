@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace courseproject_api.Dtos
+﻿namespace courseproject_api.Dtos
 {
     public class UserRequestDto
     {

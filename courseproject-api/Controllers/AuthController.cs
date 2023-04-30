@@ -33,9 +33,14 @@ namespace courseproject_api.Controllers
                 return BadRequest("User with this E-Mail already exists.");
             }
 
-            User user = _userRepository.AddUser(request);
+            if (request.Username is null)
+            {
+                return BadRequest("Username is required.");
+            }
 
-            UserResponseDto response = _mapper.Map<UserResponseDto>(user);
+            var user = _userRepository.AddUser(request);
+
+            var response = _mapper.Map<UserDto>(user);
 
             return Created($"api/users/{response.Id}", response);
         }
@@ -48,14 +53,14 @@ namespace courseproject_api.Controllers
                 return BadRequest("User with this E-Mail doesn't exist.");
             }
 
-            User user = _userRepository.GetUser(request.Email);
+            var user = _userRepository.GetUser(request.Email);
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
                 return BadRequest("Incorrect password.");
             }
 
-            string token = CreateToken(user);
+            var token = CreateToken(user);
 
             return Ok(token);
         }
@@ -66,7 +71,8 @@ namespace courseproject_api.Controllers
             {
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Role, user.Role),
             }; 
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
@@ -77,8 +83,8 @@ namespace courseproject_api.Controllers
 
             var token = new JwtSecurityToken(
                 claims: claims,
-                expires: DateTime.Now.AddDays(1),
-                signingCredentials: credentials
+                signingCredentials: credentials,
+                expires: DateTime.Now.AddDays(1)
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);

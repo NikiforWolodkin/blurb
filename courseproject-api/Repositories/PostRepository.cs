@@ -1,0 +1,247 @@
+﻿using courseproject_api.Data;
+using courseproject_api.Dtos;
+using courseproject_api.Interfaces;
+using courseproject_api.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+
+namespace courseproject_api.Repositories
+{
+    public class PostRepository : IPostRepository
+    {
+        private readonly DataContext _context;
+        private readonly IUserRepository _userRepository;
+
+        public PostRepository(DataContext context, IUserRepository userRepository)
+        {
+            _context = context;
+            _userRepository = userRepository;
+        }
+
+        public ICollection<KeyValuePair<User, Post>> GetPosts()
+        {
+            IList<User> users = _userRepository.GetUsers().ToList();
+
+            IList<KeyValuePair<User, Post>> posts = new List<KeyValuePair<User, Post>>();
+
+            foreach (var user in users)
+            {
+                foreach (var post in user.Posts)
+                {
+                    posts.Add(new KeyValuePair<User, Post>(user, post));
+                }
+            }
+
+            return posts;
+        }
+
+        public ICollection<KeyValuePair<User, Post>> GetPosts(int userId)
+        {
+            IList<User> users = _userRepository.GetUsers()
+                .Where(u => u.Id == userId)
+                .ToList();
+
+            IList<KeyValuePair<User, Post>> posts = new List<KeyValuePair<User, Post>>();
+
+            foreach (var user in users)
+            {
+                foreach (var post in user.Posts)
+                {
+                    posts.Add(new KeyValuePair<User, Post>(user, post));
+                }
+            }
+
+            return posts;
+        }
+
+        public KeyValuePair<User, Post> GetPost(int id)
+        {
+            User user = _userRepository.GetUsers()
+                .Where(u => u.Posts.Any(p => p.Id == id))
+                .FirstOrDefault();
+
+            Post post = user.Posts
+                .Where(p => p.Id == id)
+                .FirstOrDefault();
+
+            return new KeyValuePair<User, Post>(user, post);
+        }
+
+        public bool PostExists(int id)
+        {
+            return _context.Posts.Any(p => p.Id == id);
+        }
+
+        public KeyValuePair<User, Post> AddPost(PostDto postDto)
+        {
+            Post post = new Post();
+
+            post.Text = postDto.Text;
+            post.CreationTime = DateTime.UtcNow;
+
+            User user = _userRepository.GetUser((int)postDto.AuthorId);
+
+            user.Posts.Add(post);
+
+            _context.SaveChanges();
+
+            post = GetPost(post.Id).Value;
+
+            return new KeyValuePair<User, Post>(user, post);
+        }
+
+        public int GetPostLikeCount(int id)
+        {
+            return _context.Posts
+                .Include(p => p.Likes)
+                .Where (p => p.Id == id)
+                .FirstOrDefault()
+                .Likes
+                .Count();
+        }
+
+        public int GetPostShareCount(int id)
+        {
+            return _context.Posts
+                   .Include(p => p.Shares)
+                   .Where(p => p.Id == id)
+                   .FirstOrDefault()
+                   .Shares
+                   .Count();
+        }
+
+        public int GetPostCommentCount(int id)
+        {
+            return _context.Posts
+                .Include(p => p.Comments)
+                .Where(p => p.Id == id)
+                .FirstOrDefault()
+                .Comments
+                .Count();
+        }
+
+        public int GetPostReportCount(int id)
+        {
+            return _context.Posts
+                   .Include(p => p.Reports)
+                   .Where(p => p.Id == id)
+                   .FirstOrDefault()
+                   .Reports
+                   .Count();
+        }
+
+        public ICollection<Comment> GetPostComments(int postId)
+        {
+            return _userRepository.GetUsers()
+                .Select(u => u.Comments)
+                .SelectMany(l => l) 
+                .Where(c => c.PostId == postId)
+                .ToList();
+        }
+
+        public bool AddLikeToPost(int postId, int userId)
+        {
+            if (_context.Likes.Any(l => l.PostId == postId && l.UserId == userId))
+            {
+                return false;
+            }
+
+            Like like = new Like();
+
+            like.UserId = userId;
+            like.PostId = postId;
+
+            _context.Likes.Add(like);
+
+            _context.SaveChanges();
+
+            return true;
+        }
+
+        public bool RemoveLikeFromPost(int postId, int userId)
+        {
+            if (!_context.Likes.Any(l => l.PostId == postId && l.UserId == userId))
+            {
+                return false;
+            }
+
+            Like like = _context.Likes
+                .Where(l => l.PostId == postId && l.UserId == userId)
+                .FirstOrDefault();
+
+            _context.Likes.Remove(like);
+
+            _context.SaveChanges();
+
+            return true;
+        }
+
+        public Comment AddCommentToPost(int postId, CommentDto commentDto)
+        {
+            Comment comment = new Comment();
+
+            comment.PostId = postId;
+            comment.UserId = (int)commentDto.AuthorId;
+            comment.Text = commentDto.Text;
+            comment.CreationTime = DateTime.UtcNow;
+            
+            _context.Comments.Add(comment);
+
+            _context.SaveChanges();
+
+            return _context.Comments
+                .Include(c => c.User)
+                .Where(c => c.Id == comment.Id)
+                .FirstOrDefault();
+        }
+
+        public bool AddShareToPost(int postId, int userId)
+        {
+            if (_context.Shares.Any(l => l.PostId == postId && l.UserId == userId))
+            {
+                return false;
+            }
+
+            Share share = new Share();
+
+            share.UserId = userId;
+            share.PostId = postId;
+
+            _context.Shares.Add(share);
+
+            _context.SaveChanges();
+
+            return true;
+        }
+
+        public bool AddReportToPost(int postId, int userId)
+        {
+            if (_context.Reports.Any(l => l.PostId == postId && l.UserId == userId))
+            {
+                return false;
+            }
+
+            Report report = new Report();
+
+            report.UserId = userId;
+            report.PostId = postId;
+
+            _context.Reports.Add(report);
+
+            _context.SaveChanges();
+
+            return true;
+        }
+
+        public bool DeletePost(int id)
+        {
+            Post post = GetPost(id).Value;
+
+            _context.Posts.Remove(post);
+
+            _context.SaveChanges();
+
+            return true;
+        }
+    }
+}

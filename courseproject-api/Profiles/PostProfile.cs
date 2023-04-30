@@ -4,11 +4,11 @@ using courseproject_api.Models;
 
 namespace courseproject_api.Profiles
 {
-    public class UserProfile : Profile
+    public class PostProfile : Profile
     {
-        public UserProfile()
+        public PostProfile()
         {
-            CreateMap<User, UserDto>();
+            CreateMap<Post, PostDto>();
         }
     }
 }
