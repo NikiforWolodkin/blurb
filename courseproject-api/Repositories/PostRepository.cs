@@ -4,6 +4,7 @@ using courseproject_api.Interfaces;
 using courseproject_api.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Collections.Immutable;
 
 namespace courseproject_api.Repositories
 {
@@ -52,6 +53,30 @@ namespace courseproject_api.Repositories
             }
 
             return posts;
+        }
+
+        public ICollection<KeyValuePair<User, Post>> GetTrendingPosts(int page)
+        {
+            return GetPosts()
+                .Where(k => k.Value.CreationTime > DateTime.UtcNow.AddDays(-3))
+                // .OrderByDescending(k => k.Value.Likes)
+                .Skip(20 * page)
+                .Take(20)
+                .ToList();
+        }
+
+        public ICollection<KeyValuePair<User, Post>> GetSubscriptionPosts(int page, int userId)
+        {
+            ICollection<int> subscriptions = _userRepository.GetUserSubscriptions(userId)
+                .Select(u => u.Id)
+                .ToList();
+
+            return GetPosts()
+                .Where(k => subscriptions.Contains(k.Key.Id))
+                // .OrderByDescending(k => k.Value.CreationTime)
+                .Skip(20 * page)
+                .Take(20)
+                .ToList();
         }
 
         public KeyValuePair<User, Post> GetPost(int id)
@@ -242,6 +267,26 @@ namespace courseproject_api.Repositories
             _context.SaveChanges();
 
             return true;
+        }
+
+        public bool IsPostLiked(int postId, int userId)
+        {
+            return _context.Likes.Any(l => l.PostId == postId && l.UserId == userId);
+        }
+
+        public StatsDto GetStats()
+        {
+            StatsDto stats = new StatsDto();
+
+            stats.Users = _context.Users.Count();
+            stats.Posts = _context.Posts.Count();
+            stats.Likes = _context.Likes.Count();
+            stats.Shares = _context.Shares.Count();
+            stats.Comments = _context.Comments.Count();
+            stats.Reports = _context.Reports.Count();
+            stats.BlockedUsers = _context.Users.Where(u => u.Status == "BANNED").Count();
+
+            return stats;
         }
     }
 }

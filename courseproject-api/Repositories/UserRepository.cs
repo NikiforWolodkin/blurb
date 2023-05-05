@@ -75,8 +75,8 @@ namespace courseproject_api.Repositories
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(userDto.Password);
             user.Username = userDto.Username;
             user.RegistrationDate = DateTime.UtcNow;
-            user.Avatar = "DEFAULT";
-            user.ProfileColor = "DEFAULT";
+            user.Avatar = "Basic";
+            user.ProfileColor = "Red";
             user.Status = "ACTIVE";
             user.Role = "USER";
 
@@ -172,6 +172,11 @@ namespace courseproject_api.Repositories
             _context.SaveChanges();
 
             return true;
+        }
+
+        public bool IsUserSubscribed(int userId, int publisherId)
+        {
+            return _context.Subscriptions.Any(s => s.SubscriberId == userId && s.PublisherId == publisherId);
         }
     }
 }

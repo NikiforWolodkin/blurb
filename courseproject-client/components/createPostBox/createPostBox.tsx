@@ -3,9 +3,17 @@
 import React, { useState, useRef } from "react";
 import useAutoresizeTextarea from "./useAutoresizeTextarea";
 import { IoSend } from "react-icons/io5";
+import { useRouter } from "next/navigation";
 
-const CreatePostBox: React.FC = () => {
+interface ICreatePostBoxProps {
+    setError: React.Dispatch<React.SetStateAction<string>>
+}
+
+const CreatePostBox: React.FC<ICreatePostBoxProps> = ({ setError }) => {
+    const router = useRouter();
+
     const [text, setText] = useState<string>("");
+    
     const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
     useAutoresizeTextarea(textAreaRef.current, text);
@@ -14,6 +22,30 @@ const CreatePostBox: React.FC = () => {
         const value = e.target?.value;
     
         setText(value);
+    };
+
+    const createPost = async () => {
+        if (text === "") {
+            return;
+        }
+
+        const response = await fetch("/blurb-api/posts", {
+            method: "POST",
+            headers: {
+                "Content-type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify({text}),
+            cache: 'no-store'
+        });
+
+        if (!response.ok) {
+            setError(await response.text());
+            return;
+        }
+
+        const post = await response.json();
+        router.push(`/posts/${post.id}`);
     };
 
     return (
@@ -27,7 +59,10 @@ const CreatePostBox: React.FC = () => {
                     ref={textAreaRef}
                     rows={1}
                 />
-                <div className="cursor-pointer text-2xl text-red-700 hover:text-red-400 ml-2 mb-1">
+                <div 
+                    className="cursor-pointer text-2xl text-red-700 hover:text-red-400 ml-2 mb-1"
+                    onClick={createPost}   
+                >
                     <IoSend />
                 </div>
                 

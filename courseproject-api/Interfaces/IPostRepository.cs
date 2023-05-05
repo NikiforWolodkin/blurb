@@ -5,8 +5,11 @@ namespace courseproject_api.Interfaces
 {
     public interface IPostRepository
     {
+        public StatsDto GetStats();
         public ICollection<KeyValuePair<User, Post>> GetPosts();
         public ICollection<KeyValuePair<User, Post>> GetPosts(int userId);
+        public ICollection<KeyValuePair<User, Post>> GetTrendingPosts(int page);
+        public ICollection<KeyValuePair<User, Post>> GetSubscriptionPosts(int page, int userId);
         public KeyValuePair<User, Post> GetPost(int id);
         public bool PostExists(int id);
         public KeyValuePair<User, Post> AddPost(PostDto post);
@@ -21,5 +24,6 @@ namespace courseproject_api.Interfaces
         public bool AddShareToPost(int postId, int userId);
         public bool AddReportToPost(int postId, int userId);
         public bool DeletePost(int id);
+        public bool IsPostLiked(int postId, int userId);
     }
 }

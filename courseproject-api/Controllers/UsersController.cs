@@ -5,12 +5,14 @@ using courseproject_api.Models;
 using courseproject_api.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 
 namespace courseproject_api.Controllers
 {
     [ApiController, Authorize]
-    [Route("api/[controller]")]
+    [Route("blurb-api/[controller]")]
     public class UsersController : Controller
     {
         private readonly IUserRepository _userRepository;
@@ -25,11 +27,37 @@ namespace courseproject_api.Controllers
         }
 
         [HttpGet]
-        public IActionResult GetUsers()
+        public IActionResult GetUsers(string? search)
         {
+            var identity = (ClaimsIdentity)User.Identity;
+            var id = identity.Claims
+                .Where(c => c.Type == ClaimTypes.NameIdentifier)
+                .Select(c => c.Value)
+                .FirstOrDefault();
+
             var users = _userRepository.GetUsers();
 
             var usersDto = _mapper.Map<ICollection<UserDto>>(users);
+
+            if (!search.IsNullOrEmpty())
+            {
+                usersDto = usersDto.Where(u => u.Username.Contains(search)).ToList();
+            }
+
+            var currentUser = _userRepository.GetUser(Convert.ToInt32(id));
+
+            foreach (var user in usersDto)
+            {
+                user.IsSubscribed = _userRepository.IsUserSubscribed(currentUser.Id, (int)user.Id);
+                if (currentUser.Role == "ADMIN" || currentUser.Role == "MODERATOR")
+                {
+                    user.CanBan = true;
+                }
+                else
+                {
+                    user.CanBan = false;    
+                }
+            }
 
             return Ok(usersDto);
         }
@@ -49,9 +77,24 @@ namespace courseproject_api.Controllers
             return Ok(userDto);
         }
         
-        [HttpGet("{id}/posts")]
+        [HttpGet("{id}/posts"), Authorize]
         public IActionResult GetUserPosts(int id)
         {
+            var identity = (ClaimsIdentity)User.Identity;
+            var email = identity.Claims
+                .Where(c => c.Type == ClaimTypes.Email)
+                .Select(c => c.Value)
+                .FirstOrDefault();
+            var userId = identity.Claims
+                .Where(c => c.Type == ClaimTypes.NameIdentifier)
+                .Select(c => c.Value)
+                .FirstOrDefault();
+
+            if (!_userRepository.UserExists(email))
+            {
+                return NotFound("User not found.");
+            }
+
             if (!_userRepository.UserExists(id))
             {
                 return NotFound("User not found.");
@@ -67,10 +110,13 @@ namespace courseproject_api.Controllers
 
                 post.AuthorId = keyValuePair.Key.Id;
                 post.AuthorUsername = keyValuePair.Key.Username;
+                post.AuthorAvatar = keyValuePair.Key.Avatar;
+                post.AuthorProfileColor = keyValuePair.Key.ProfileColor;
                 post.LikeCount = _postRepository.GetPostLikeCount(keyValuePair.Value.Id);
                 post.ShareCount = _postRepository.GetPostShareCount(keyValuePair.Value.Id);
                 post.CommentCount = _postRepository.GetPostCommentCount(keyValuePair.Value.Id);
                 post.ReportCount = _postRepository.GetPostReportCount(keyValuePair.Value.Id);
+                post.IsLiked = _postRepository.IsPostLiked(keyValuePair.Value.Id, Convert.ToInt32(userId));
 
                 posts.Add(post);
             }
@@ -121,7 +167,60 @@ namespace courseproject_api.Controllers
                 _mapper.Map<ICollection<UserDto>>(
                     _userRepository.GetUserSubscriptions(Convert.ToInt32(id)));
 
+            var currentUser = _userRepository.GetUser(Convert.ToInt32(id));
+
+            foreach (var user in subscriptions)
+            {
+                user.IsSubscribed = _userRepository.IsUserSubscribed(currentUser.Id, (int)user.Id);
+                if (currentUser.Role == "ADMIN" || currentUser.Role == "MODERATOR")
+                {
+                    user.CanBan = true;
+                }
+                else
+                {
+                    user.CanBan = false;
+                }
+            }
+
             return Ok(subscriptions);
+        }
+
+        [HttpGet("me/posts"), Authorize]
+        public IActionResult GetCurrentUserPosts()
+        {
+            var identity = (ClaimsIdentity)User.Identity;
+            var id = identity.Claims
+                .Where(c => c.Type == ClaimTypes.NameIdentifier)
+                .Select(c => c.Value)
+                .FirstOrDefault();
+
+            if (!_userRepository.UserExists(Convert.ToInt32(id)))
+            {
+                return NotFound("User not found.");
+            }
+
+            var postsAndUsers = _postRepository.GetPosts(Convert.ToInt32(id));
+
+            var posts = new List<PostDto>();
+
+            foreach (var keyValuePair in postsAndUsers)
+            {
+                var post = _mapper.Map<PostDto>(keyValuePair.Value);
+
+                post.AuthorId = keyValuePair.Key.Id;
+                post.AuthorUsername = keyValuePair.Key.Username;
+                post.AuthorProfileColor = keyValuePair.Key.ProfileColor;
+                post.AuthorAvatar = keyValuePair.Key.Avatar; 
+                post.LikeCount = _postRepository.GetPostLikeCount(keyValuePair.Value.Id);
+                post.ShareCount = _postRepository.GetPostShareCount(keyValuePair.Value.Id);
+                post.CommentCount = _postRepository.GetPostCommentCount(keyValuePair.Value.Id);
+                post.ReportCount = _postRepository.GetPostReportCount(keyValuePair.Value.Id);
+                post.IsLiked = _postRepository.IsPostLiked(keyValuePair.Value.Id, keyValuePair.Key.Id);
+
+                posts.Add(post);
+            }
+
+            return Ok(posts);
         }
 
         [HttpPost("me/subscriptions")]
@@ -159,6 +258,53 @@ namespace courseproject_api.Controllers
                     _userRepository.GetUserSubscriptions(Convert.ToInt32(id)));
 
             return Ok(subscriptions);
+        }
+
+        [HttpGet("me/subscriptions/posts"), Authorize]
+        public IActionResult GetSubscriptionPosts(int? page)
+        {
+            var identity = (ClaimsIdentity)User.Identity;
+            var email = identity.Claims
+                .Where(c => c.Type == ClaimTypes.Email)
+                .Select(c => c.Value)
+                .FirstOrDefault();
+            var id = identity.Claims
+                .Where(c => c.Type == ClaimTypes.NameIdentifier)
+                .Select(c => c.Value)
+                .FirstOrDefault();
+
+            if (!_userRepository.UserExists(email))
+            {
+                return NotFound("User not found.");
+            }
+
+            if (page is null)
+            {
+                page = 0;
+            }
+
+            var postsAndUsers = _postRepository.GetSubscriptionPosts((int)page, Convert.ToInt32(id));
+
+            var posts = new List<PostDto>();
+
+            foreach (var keyValuePair in postsAndUsers)
+            {
+                var post = _mapper.Map<PostDto>(keyValuePair.Value);
+
+                post.AuthorId = keyValuePair.Key.Id;
+                post.AuthorUsername = keyValuePair.Key.Username;
+                post.AuthorAvatar = keyValuePair.Key.Avatar;
+                post.AuthorProfileColor = keyValuePair.Key.ProfileColor;
+                post.LikeCount = _postRepository.GetPostLikeCount(keyValuePair.Value.Id);
+                post.ShareCount = _postRepository.GetPostShareCount(keyValuePair.Value.Id);
+                post.CommentCount = _postRepository.GetPostCommentCount(keyValuePair.Value.Id);
+                post.ReportCount = _postRepository.GetPostReportCount(keyValuePair.Value.Id);
+                post.IsLiked = _postRepository.IsPostLiked(keyValuePair.Value.Id, Convert.ToInt32(id));
+
+                posts.Add(post);
+            }
+
+            return Ok(posts);
         }
 
         [HttpDelete("me/subscriptions")]

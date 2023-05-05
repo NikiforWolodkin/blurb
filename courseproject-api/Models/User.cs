@@ -2,7 +2,7 @@
 
 namespace courseproject_api.Models
 {
-    public class User
+    public class User : IComparable<User>
     {
         public int Id { get; set; }
         public string Email { get; set; }
@@ -20,5 +20,15 @@ namespace courseproject_api.Models
         public ICollection<Post> Posts { get; set; }
         public string Status { get; set; }
         public string Role { get; set; }
+
+        public int CompareTo(User? other)
+        {
+            if (other is User post)
+            {
+                return Id.CompareTo(post.Id);
+            }
+
+            return -1;
+        }
     }
 }

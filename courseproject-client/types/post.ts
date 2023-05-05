@@ -1,10 +1,16 @@
 type Post = {
-    author: string,
+    id: number, 
     text: string,
-    date: number,
-    likes: number,
-    comments: number,
-    shares: number,
+    authorId: number,
+    authorUsername: string,
+    creationTime: string,
+    isLiked: boolean,
+    likeCount: number,
+    commentCount: number,
+    shareCount: number,
+    reportCount: number,
+    authorProfileColor: string,
+    authorAvatar: string
 };
 
 export default Post;

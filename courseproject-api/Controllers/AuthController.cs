@@ -11,7 +11,7 @@ using System.Text;
 namespace courseproject_api.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("blurb-api/[controller]")]
     public class AuthController : Controller
     {
         private readonly IUserRepository _userRepository;
@@ -73,6 +73,7 @@ namespace courseproject_api.Controllers
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Role, user.Role),
+                new Claim(ClaimTypes.UserData, user.Status)
             }; 
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(

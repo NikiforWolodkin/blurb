@@ -13,7 +13,7 @@ namespace courseproject_api.Interfaces
         ICollection<User> GetUserSubscriptions(int id);
         bool AddUserSubscription(int subscriberId, int publisherId);
         bool RemoveUserSubscription(int subscriberId, int publisherId);
-
+        bool IsUserSubscribed(int userId, int publisherId);
         User AddUser(UserRequestDto user);
         User UpdateUser(UserDto user);
         bool DeleteUser(int id);

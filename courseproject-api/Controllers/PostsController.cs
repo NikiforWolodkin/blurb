@@ -11,7 +11,7 @@ using System.Security.Claims;
 namespace courseproject_api.Controllers
 {
     [ApiController, Authorize]
-    [Route("api/[controller]")]
+    [Route("blurb-api/[controller]")]
     public class PostsController : Controller
     {
         private readonly IPostRepository _postRepository;
@@ -23,6 +23,12 @@ namespace courseproject_api.Controllers
             _postRepository = postRepository;
             _userRepository = userRepository;
             _mapper = mapper;
+        }
+
+        [HttpGet("/stats")]
+        public IActionResult GetStats() 
+        {
+            return Ok(_postRepository.GetStats());
         }
 
         [HttpGet]
@@ -38,10 +44,13 @@ namespace courseproject_api.Controllers
 
                 post.AuthorId = keyValuePair.Key.Id;
                 post.AuthorUsername = keyValuePair.Key.Username;
+                post.AuthorAvatar = keyValuePair.Key.Avatar;
+                post.AuthorProfileColor = keyValuePair.Key.ProfileColor;
                 post.LikeCount = _postRepository.GetPostLikeCount(keyValuePair.Value.Id);
                 post.ShareCount= _postRepository.GetPostShareCount(keyValuePair.Value.Id);
                 post.CommentCount = _postRepository.GetPostCommentCount(keyValuePair.Value.Id);
                 post.ReportCount = _postRepository.GetPostReportCount(keyValuePair.Value.Id);
+                // post.IsLiked = _postRepository.IsPostLiked(keyValuePair.Value.Id, keyValuePair.Key.Id);
 
                 posts.Add(post);
             }
@@ -49,9 +58,71 @@ namespace courseproject_api.Controllers
             return Ok(posts);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("trending"), Authorize]
+        public IActionResult GetTrendingPosts(int? page)
+        {
+            var identity = (ClaimsIdentity)User.Identity;
+            var email = identity.Claims
+                .Where(c => c.Type == ClaimTypes.Email)
+                .Select(c => c.Value)
+                .FirstOrDefault();
+            var userId = identity.Claims
+                .Where(c => c.Type == ClaimTypes.NameIdentifier)
+                .Select(c => c.Value)
+                .FirstOrDefault();
+
+            if (!_userRepository.UserExists(email))
+            {
+                return NotFound("User not found.");
+            }
+
+            if (page is null)
+            {
+                page = 0;
+            }
+
+            var postsAndUsers = _postRepository.GetTrendingPosts((int)page);
+
+            var posts = new List<PostDto>();
+
+            foreach (var keyValuePair in postsAndUsers)
+            {
+                var post = _mapper.Map<PostDto>(keyValuePair.Value);
+
+                post.AuthorId = keyValuePair.Key.Id;
+                post.AuthorUsername = keyValuePair.Key.Username;
+                post.AuthorAvatar = keyValuePair.Key.Avatar;
+                post.AuthorProfileColor = keyValuePair.Key.ProfileColor;
+                post.LikeCount = _postRepository.GetPostLikeCount(keyValuePair.Value.Id);
+                post.ShareCount = _postRepository.GetPostShareCount(keyValuePair.Value.Id);
+                post.CommentCount = _postRepository.GetPostCommentCount(keyValuePair.Value.Id);
+                post.ReportCount = _postRepository.GetPostReportCount(keyValuePair.Value.Id);
+                post.IsLiked = _postRepository.IsPostLiked(keyValuePair.Value.Id, Convert.ToInt32(userId));
+
+                posts.Add(post);
+            }
+
+            return Ok(posts);
+        }
+
+        [HttpGet("{id}"), Authorize]
         public IActionResult GetPost(int id)
         {
+            var identity = (ClaimsIdentity)User.Identity;
+            var email = identity.Claims
+                .Where(c => c.Type == ClaimTypes.Email)
+                .Select(c => c.Value)
+                .FirstOrDefault();
+            var userId = identity.Claims
+                .Where(c => c.Type == ClaimTypes.NameIdentifier)
+                .Select(c => c.Value)
+                .FirstOrDefault();
+
+            if (!_userRepository.UserExists(email))
+            {
+                return NotFound("User not found.");
+            }
+
             if (!_postRepository.PostExists(id))
             {
                 return NotFound("Post not found.");
@@ -63,10 +134,13 @@ namespace courseproject_api.Controllers
 
             post.AuthorId = postAndUser.Key.Id;
             post.AuthorUsername = postAndUser.Key.Username;
+            post.AuthorAvatar = postAndUser.Key.Avatar;
+            post.AuthorProfileColor = postAndUser.Key.ProfileColor;
             post.LikeCount = _postRepository.GetPostLikeCount(postAndUser.Value.Id);
             post.ShareCount = _postRepository.GetPostShareCount(postAndUser.Value.Id);
             post.CommentCount = _postRepository.GetPostCommentCount(postAndUser.Value.Id);
             post.ReportCount = _postRepository.GetPostReportCount(postAndUser.Value.Id);
+            post.IsLiked = _postRepository.IsPostLiked(postAndUser.Value.Id, Convert.ToInt32(userId));
 
             return Ok(post);
         }
@@ -201,6 +275,8 @@ namespace courseproject_api.Controllers
 
                 commentsDto[i].AuthorId = comments[i].User.Id;
                 commentsDto[i].AuthorUsername = comments[i].User.Username;
+                commentsDto[i].AuthorProfileColor = comments[i].User.ProfileColor;
+                commentsDto[i].AuthorAvatar = comments[i].User.Avatar;
             }
 
             return Ok(commentsDto);
@@ -238,6 +314,8 @@ namespace courseproject_api.Controllers
 
             commentDto.AuthorId = comment.User.Id;
             commentDto.AuthorUsername = comment.User.Username;
+            commentDto.AuthorProfileColor = comment.User.ProfileColor;
+            commentDto.AuthorAvatar = comment.User.Avatar;
 
             return Ok(commentDto);
         }

@@ -7,7 +7,10 @@ namespace courseproject_api.Dtos
         public int? Id { get; set; }
         public string? Text { get; set; }
         public int? AuthorId { get; set; }
+        public bool? IsLiked { get; set; }
         public string? AuthorUsername { get; set; }
+        public string? AuthorProfileColor { get; set; }
+        public string? AuthorAvatar { get; set; }
         public DateTime? CreationTime { get; set; }
         public int? LikeCount { get; set; }
         public int? CommentCount { get; set; }
