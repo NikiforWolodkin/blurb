@@ -24,25 +24,30 @@ namespace courseproject_api.Migrations
 
             modelBuilder.Entity("courseproject_api.Models.Comment", b =>
                 {
-                    b.Property<int>("PostId")
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
-                    b.Property<int>("AuthorId")
-                        .HasColumnType("integer");
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("Id")
+                    b.Property<int>("PostId")
                         .HasColumnType("integer");
 
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.HasKey("PostId", "AuthorId");
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
 
-                    b.HasIndex("AuthorId");
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Comments");
                 });
@@ -132,6 +137,28 @@ namespace courseproject_api.Migrations
                     b.ToTable("Subscriptions");
                 });
 
+            modelBuilder.Entity("courseproject_api.Models.Tag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("PostId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PostId");
+
+                    b.ToTable("Tags");
+                });
+
             modelBuilder.Entity("courseproject_api.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -178,21 +205,21 @@ namespace courseproject_api.Migrations
 
             modelBuilder.Entity("courseproject_api.Models.Comment", b =>
                 {
-                    b.HasOne("courseproject_api.Models.User", "Author")
-                        .WithMany("Comments")
-                        .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("courseproject_api.Models.Post", "Post")
                         .WithMany("Comments")
                         .HasForeignKey("PostId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Author");
+                    b.HasOne("courseproject_api.Models.User", "User")
+                        .WithMany("Comments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Post");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("courseproject_api.Models.Like", b =>
@@ -278,6 +305,13 @@ namespace courseproject_api.Migrations
                     b.Navigation("Subscriber");
                 });
 
+            modelBuilder.Entity("courseproject_api.Models.Tag", b =>
+                {
+                    b.HasOne("courseproject_api.Models.Post", null)
+                        .WithMany("Tags")
+                        .HasForeignKey("PostId");
+                });
+
             modelBuilder.Entity("courseproject_api.Models.Post", b =>
                 {
                     b.Navigation("Comments");
@@ -287,6 +321,8 @@ namespace courseproject_api.Migrations
                     b.Navigation("Reports");
 
                     b.Navigation("Shares");
+
+                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("courseproject_api.Models.User", b =>

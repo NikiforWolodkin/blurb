@@ -12,5 +12,6 @@ namespace courseproject_api.Dtos
         public string? AuthorUsername { get; set; }
         public string? AuthorAvatar { get; set; }
         public string? AuthorProfileColor { get; set; }
+        public string? AuthorStatus { get; set; }
     }
 }

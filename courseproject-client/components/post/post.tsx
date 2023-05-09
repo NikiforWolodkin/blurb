@@ -125,8 +125,11 @@ const Post: React.FC<IPostProps> = ({ post }) => {
                     />
                 </div>
                 <div className="flex flex-col items-start ml-2">
-                    <div className="font-bold text-lg">
-                        {post.authorUsername}
+                    <div 
+                        className="font-bold text-lg cursor-pointer"
+                        onClick={navigateToUser}    
+                    >
+                        {post.authorUsername + (post.authorStatus === "BANNED" ? " (Blocked)" : "")}
                     </div>
                     <div className="text-zinc-500 text-sm">
                         Posted on {new Date(post.creationTime).toDateString()}
@@ -136,6 +139,10 @@ const Post: React.FC<IPostProps> = ({ post }) => {
 
             <div className="mx-3 mt-3">
                 {post.text}
+            </div>
+
+            <div className="mx-3 mt-2 text-blue-500">
+                {post.tags.map(item => `#${item}`).join(" ")}
             </div>
 
             <div className="text-2xl flex ml-3 mt-3 mb-3 w-full">

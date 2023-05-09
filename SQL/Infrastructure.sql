@@ -7,4 +7,3 @@ CREATE DATABASE blurb_db
 	ENCODING 'UTF8'
 	TABLESPACE blurb_ts;
 
-CREATE SCHEMA statistics AUTHORIZATION blurb_admin;

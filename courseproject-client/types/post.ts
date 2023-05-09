@@ -10,7 +10,9 @@ type Post = {
     shareCount: number,
     reportCount: number,
     authorProfileColor: string,
-    authorAvatar: string
+    authorAvatar: string,
+    authorStatus: string,
+    tags: string[]
 };
 
 export default Post;

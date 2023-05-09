@@ -38,7 +38,7 @@ export default function Account() {
             });
       
             if (!response.ok) {
-              setError("Failed to fetch data");
+              setError(await response.text());
               return
             }
       

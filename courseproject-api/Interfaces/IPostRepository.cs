@@ -6,6 +6,7 @@ namespace courseproject_api.Interfaces
     public interface IPostRepository
     {
         public StatsDto GetStats();
+        public ICollection<KeyValuePair<User, Post>> GetReportedPosts();
         public ICollection<KeyValuePair<User, Post>> GetPosts();
         public ICollection<KeyValuePair<User, Post>> GetPosts(int userId);
         public ICollection<KeyValuePair<User, Post>> GetTrendingPosts(int page);
@@ -23,6 +24,7 @@ namespace courseproject_api.Interfaces
         public Comment AddCommentToPost(int postId, CommentDto comment);
         public bool AddShareToPost(int postId, int userId);
         public bool AddReportToPost(int postId, int userId);
+        public bool DeleteReports(int id);
         public bool DeletePost(int id);
         public bool IsPostLiked(int postId, int userId);
     }

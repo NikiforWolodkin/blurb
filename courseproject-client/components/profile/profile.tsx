@@ -65,7 +65,7 @@ const Profile: React.FC<IProfileProps> = ({ profile }) => {
                 </div>
                 <div className="flex flex-wrap items-end mx-3 mt-2">
                     <div className="text-3xl font-bold mr-3">
-                        {profile.username}
+                        {profile.username + (profile.status === "BANNED" ? " (Blocked)" : "")}
                     </div>
                     {profile.registrationDate === "0" ? null : 
                     <div className="text-xl text-zinc-500 mb-px">

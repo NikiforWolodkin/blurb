@@ -211,6 +211,8 @@ namespace courseproject_api.Controllers
                 post.AuthorUsername = keyValuePair.Key.Username;
                 post.AuthorProfileColor = keyValuePair.Key.ProfileColor;
                 post.AuthorAvatar = keyValuePair.Key.Avatar; 
+                post.AuthorStatus = keyValuePair.Key.Status;
+                post.Tags = keyValuePair.Value.Tags.Select(t => t.Text).ToList();
                 post.LikeCount = _postRepository.GetPostLikeCount(keyValuePair.Value.Id);
                 post.ShareCount = _postRepository.GetPostShareCount(keyValuePair.Value.Id);
                 post.CommentCount = _postRepository.GetPostCommentCount(keyValuePair.Value.Id);
@@ -295,6 +297,8 @@ namespace courseproject_api.Controllers
                 post.AuthorUsername = keyValuePair.Key.Username;
                 post.AuthorAvatar = keyValuePair.Key.Avatar;
                 post.AuthorProfileColor = keyValuePair.Key.ProfileColor;
+                post.AuthorStatus = keyValuePair.Key.Status;
+                post.Tags = keyValuePair.Value.Tags.Select(t => t.Text).ToList();
                 post.LikeCount = _postRepository.GetPostLikeCount(keyValuePair.Value.Id);
                 post.ShareCount = _postRepository.GetPostShareCount(keyValuePair.Value.Id);
                 post.CommentCount = _postRepository.GetPostCommentCount(keyValuePair.Value.Id);
@@ -360,6 +364,11 @@ namespace courseproject_api.Controllers
             if (!_userRepository.UserExists(email))
             {
                 return NotFound("User not found.");
+            }
+
+            if (_userRepository.GetUser(Convert.ToInt32(id)).Status == "BANNED")
+            {
+                return BadRequest("You are blocked and can't change your profile.");
             }
 
             request.Id = Convert.ToInt32(id);

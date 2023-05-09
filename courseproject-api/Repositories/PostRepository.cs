@@ -1,5 +1,6 @@
 ﻿using courseproject_api.Data;
 using courseproject_api.Dtos;
+using courseproject_api.Helper;
 using courseproject_api.Interfaces;
 using courseproject_api.Models;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,19 @@ namespace courseproject_api.Repositories
             _userRepository = userRepository;
         }
 
+        public bool DeleteReports(int id)
+        {
+            Report[] reports = _context.Reports
+                .Where(r => r.PostId == id)
+                .ToArray();
+
+            _context.Reports.RemoveRange(reports);
+
+            _context.SaveChanges();
+
+            return true;
+        }
+
         public ICollection<KeyValuePair<User, Post>> GetPosts()
         {
             IList<User> users = _userRepository.GetUsers().ToList();
@@ -34,6 +48,13 @@ namespace courseproject_api.Repositories
             }
 
             return posts;
+        }
+
+        public ICollection<KeyValuePair<User, Post>> GetReportedPosts()
+        {
+            return GetPosts()
+                .Where(k => k.Value.Reports.Count() > 0)
+                .ToList();
         }
 
         public ICollection<KeyValuePair<User, Post>> GetPosts(int userId)
@@ -101,7 +122,8 @@ namespace courseproject_api.Repositories
         {
             Post post = new Post();
 
-            post.Text = postDto.Text;
+            post.Text = HashtagFinder.RemoveHashtags(postDto.Text);
+            post.Tags = HashtagFinder.FindHashtags(postDto.Text).Select(t => new Tag() { Text = t }).ToList();
             post.CreationTime = DateTime.UtcNow;
 
             User user = _userRepository.GetUser((int)postDto.AuthorId);
