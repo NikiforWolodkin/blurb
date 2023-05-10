@@ -12,12 +12,12 @@ CREATE TABLE "Users" (
 );
 
 CREATE TABLE "Posts" (
-    "Id" integer GENERATED ALWAYS AS IDENTITY,
-    "Text" text NOT NULL,
-    "CreationTime" timestamp with time zone NOT NULL,
-    "UserId" integer NULL,
-    CONSTRAINT "PK_Posts" PRIMARY KEY ("Id"),
-    CONSTRAINT "FK_Posts_Users_UserId" 
+	"Id" integer GENERATED ALWAYS AS IDENTITY,
+	"Text" text NOT NULL,
+	"CreationTime" timestamp with time zone NOT NULL,
+	"UserId" integer NULL,
+	CONSTRAINT "PK_Posts" PRIMARY KEY ("Id"),
+	CONSTRAINT "FK_Posts_Users_UserId" 
 		FOREIGN KEY ("UserId") REFERENCES "Users" ("Id") ON DELETE CASCADE
 );
 
@@ -83,14 +83,26 @@ CREATE TABLE "Tags" (
 		FOREIGN KEY ("PostId") REFERENCES "Posts" ("Id") ON DELETE CASCADE
 );
 
-CREATE INDEX "IX_Comments_AuthorId" ON "Comments" ("UserId");
+CREATE INDEX "IX_Users_RegistrationDate" ON "Users" ("RegistrationDate");
 
-CREATE INDEX "IX_Likes_PostId" ON "Likes" ("PostId");
-
+CREATE INDEX "IX_Posts_CreationTime" ON "Posts" ("CreationTime");
 CREATE INDEX "IX_Posts_UserId" ON "Posts" ("UserId");
 
+CREATE INDEX "IX_Comments_CreationTime" ON "Comments" ("CreationTime");
+CREATE INDEX "IX_Comments_UserId" ON "Comments" ("UserId");
+CREATE INDEX "IX_Comments_PostId" ON "Comments" ("PostId");
+
+CREATE INDEX "IX_Likes_UserId" ON "Likes" ("UserId");
+CREATE INDEX "IX_Likes_PostId" ON "Likes" ("PostId");
+
+CREATE INDEX "IX_Reports_UserId" ON "Reports" ("UserId");
 CREATE INDEX "IX_Reports_PostId" ON "Reports" ("PostId");
 
+CREATE INDEX "IX_Shares_UserId" ON "Shares" ("UserId");
 CREATE INDEX "IX_Shares_PostId" ON "Shares" ("PostId");
 
+CREATE INDEX "IX_Subscriptions_SubscriberId" ON "Subscriptions" ("SubscriberId");
 CREATE INDEX "IX_Subscriptions_PublisherId" ON "Subscriptions" ("PublisherId");
+
+CREATE INDEX "IX_Tags_PostId" ON "Tags" ("PostId");
+CREATE INDEX "IX_Tags_Text" ON "Tags" ("Text");
