@@ -14,6 +14,7 @@ namespace courseproject_mongo
         public List<ObjectId> Shares { get; set; }
         public List<ObjectId> Reports { get; set; }
         public List<Comment> Comments { get; set; }
+        public List<string> Tags { get; set; }
 
         public class Comment
         {

@@ -31,4 +31,35 @@ users.DeleteOne(filter);
 
 
 
+var indexOptions = new CreateIndexOptions();
+
+// создание индекса
+var signleFieldIndexKeys = Builders<User>.IndexKeys.Ascending(user => user.RegistrationDate);
+var singleFieldIndexModel = new CreateIndexModel<User>(signleFieldIndexKeys, indexOptions);
+users.Indexes.CreateOne(singleFieldIndexModel);
+
+// создание составного индекса
+var compoundIndexKeys = Builders<User>.IndexKeys
+    .Ascending(user => user.Status)
+    .Ascending(user => user.Role);
+var compoundIndexModel = new CreateIndexModel<User>(signleFieldIndexKeys, indexOptions);
+users.Indexes.CreateOne(singleFieldIndexModel);
+
+// создание индекса для нескольких ключей (коллекции)
+var multikeyIndexKeys = Builders<User>.IndexKeys.Ascending(user => user.Subscriptions);
+var multikeyIndexModel = new CreateIndexModel<User>(multikeyIndexKeys, indexOptions);
+users.Indexes.CreateOne(multikeyIndexModel);
+
+// создание текстового индекса
+var textIndexKeys = Builders<User>.IndexKeys.Text(user => user.Username);
+var textIndexModel = new CreateIndexModel<User>(textIndexKeys, indexOptions);
+users.Indexes.CreateOne(textIndexModel);
+
+// создание хэш индекса
+var hashIndexKeys = Builders<User>.IndexKeys.Hashed(user => user.Username);
+var hashIndexModel = new CreateIndexModel<User>(hashIndexKeys, indexOptions);
+users.Indexes.CreateOne(hashIndexModel);
+
+
+
 client.DropDatabase("BlurbDB");
