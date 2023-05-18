@@ -22,6 +22,7 @@ const Statistics: React.FC<IStatisticsProps> = ({ stats }) => {
                         <p>Shares:</p>
                         <p>Reports:</p>
                         <p>Blocked users:</p>
+                        <p>Popular tags:</p>
                     </div>
                 </div>
                 <div className="flex basis-1/2 my-3 text-xl">
@@ -33,6 +34,7 @@ const Statistics: React.FC<IStatisticsProps> = ({ stats }) => {
                         <p>{stats.shares}</p>
                         <p>{stats.reports}</p>
                         <p>{stats.blockedUsers}</p>
+                        <p>{stats.popularTags.join(", ")}</p>
                     </div>
                 </div>
             </div>

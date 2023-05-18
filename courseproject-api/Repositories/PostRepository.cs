@@ -307,6 +307,7 @@ namespace courseproject_api.Repositories
             stats.Comments = _context.Comments.Count();
             stats.Reports = _context.Reports.Count();
             stats.BlockedUsers = _context.Users.Where(u => u.Status == "BANNED").Count();
+            stats.PopularTags = _context.Tags.Take(3).Select(t => t.Text).ToList();
 
             return stats;
         }

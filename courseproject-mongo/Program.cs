@@ -26,7 +26,7 @@ var userFromDB = users.Find(filter).FirstOrDefault();
 userFromDB.Username = "user";
 users.ReplaceOne(filter, userFromDB);
 
-// удаление объекта
+// удаление документа
 users.DeleteOne(filter);
 
 

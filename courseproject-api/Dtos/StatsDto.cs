@@ -9,5 +9,6 @@
         public int Reports { get; set; }
         public int Likes { get; set; }
         public int BlockedUsers { get; set; }
+        public List<string> PopularTags { get; set; }
     }
 }

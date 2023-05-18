@@ -62,10 +62,16 @@ namespace courseproject_api.Controllers
             return Ok(usersDto);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}"), Authorize]
         public IActionResult GetUser(int id)
         {
-            if (!_userRepository.UserExists(id))
+            var identity = (ClaimsIdentity)User.Identity;
+            var userId = identity.Claims
+                .Where(c => c.Type == ClaimTypes.NameIdentifier)
+                .Select(c => c.Value)
+                .FirstOrDefault();
+
+            if (!_userRepository.UserExists(Convert.ToInt32(userId)))
             { 
                 return NotFound("User not found.");
             }
@@ -73,6 +79,8 @@ namespace courseproject_api.Controllers
             var user = _userRepository.GetUser(id);
 
             var userDto = _mapper.Map<UserDto>(user);
+
+            userDto.IsSubscribed = _userRepository.IsUserSubscribed(Convert.ToInt32(userId), (int)user.Id);
 
             return Ok(userDto);
         }

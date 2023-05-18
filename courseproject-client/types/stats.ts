@@ -5,7 +5,8 @@ type Stats = {
     shares: number,
     reports: number,
     likes: number,
-    blockedUsers: number
+    blockedUsers: number,
+    popularTags: string[]
 };
 
 export default Stats;
